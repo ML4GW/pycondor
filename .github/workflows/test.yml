@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - master
+      - aframe
       - release/**
   pull_request:
     branches:
