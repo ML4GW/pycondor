@@ -110,7 +110,6 @@ def test_queue_written_to_submit_file(tmpdir, queue):
         assert f'queue {queue}' in lines
     else:
         assert 'queue' in lines
-    
 
 
 def test_job_submit_env_variable_dir(tmpdir, monkeypatch):
