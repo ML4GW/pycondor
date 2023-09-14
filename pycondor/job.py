@@ -10,7 +10,7 @@ except ImportError:  # python < 3.3
 
 from .cluster import JobCluster
 from .utils import (checkdir, string_rep, requires_command,
-                    split_command_string, decode_string)
+                    split_command_string)
 from .basenode import BaseNode
 
 JobArg = namedtuple('JobArg', ['arg', 'name', 'retry'])
@@ -491,4 +491,3 @@ class Job(BaseNode):
         """
         self.build(makedirs, fancyname)
         return self.submit_job(submit_options=submit_options)
-
