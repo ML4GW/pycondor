@@ -1,6 +1,5 @@
 
 import os
-import re
 import subprocess
 from collections import namedtuple
 try:
@@ -8,16 +7,11 @@ try:
 except ImportError:  # python < 3.3
     from collections import Iterable
 
-from .cluster import JobCluster
 from .utils import (checkdir, string_rep, requires_command,
-                    split_command_string)
+                    split_command_string, decode_string)
 from .basenode import BaseNode
 
 JobArg = namedtuple('JobArg', ['arg', 'name', 'retry'])
-
-
-class FailedSubmitError(Exception):
-    pass
 
 
 class Job(BaseNode):
@@ -87,10 +81,8 @@ class Job(BaseNode):
     requirements : str or None, optional
         Additional requirements to be included in ClassAd.
 
-    queue : int, str, or None, optional
-        Either an integer specifying how many times
-        you would like this job to run, or a string to
-        append after 'queue' in the submit file.
+    queue : int or None, optional
+        Integer specifying how many times you would like this job to run.
 
     extra_lines : list or None, optional
         List of additional lines to be added to submit file.
@@ -313,7 +305,9 @@ class Job(BaseNode):
         if self.extra_lines:
             lines.extend(self.extra_lines)
 
-        # Add arguments
+        # Add arguments and queue line
+        if self.queue is not None and not isinstance(self.queue, int):
+            raise ValueError('queue must be of type int')
         # If building this submit file for a job that's being managed by DAGMan
         # just add simple arguments and queue lines
         if indag:
@@ -321,6 +315,10 @@ class Job(BaseNode):
                 lines.append('arguments = $(ARGS)')
             if self._has_arg_names:
                 lines.append('job_name = $(job_name)')
+            if self.queue:
+                lines.append('queue {}'.format(self.queue))
+            else:
+                lines.append('queue')
         else:
             if self.args and self.queue:
                 if len(self.args) > 1:
@@ -331,6 +329,7 @@ class Job(BaseNode):
                     arg = self.args[0].arg
                     lines.append('arguments = {}'.format(string_rep(arg,
                                                          quotes=True)))
+                    lines.append('queue {}'.format(self.queue))
             # Any arguments supplied will be taken care of via the queue line
             elif self.args:
                 for arg, arg_name, _ in self.args:
@@ -341,10 +340,11 @@ class Job(BaseNode):
                         lines.append('job_name = {}_{}'.format(name, arg_name))
                     else:
                         lines.append('job_name = {}'.format(name))
-
-        # write queue line last, only specifying
-        # 'queue' if self.queue is None
-        lines.append(f'queue {self.queue or ""}'.rstrip())
+                    lines.append('queue')
+            elif self.queue:
+                lines.append('queue {}'.format(self.queue))
+            else:
+                lines.append('queue')
 
         with open(submit_file, 'w') as f:
             f.writelines('\n'.join(lines))
@@ -410,8 +410,8 @@ class Job(BaseNode):
 
         Returns
         -------
-        cluster : JobCluster
-            Returns a JobCluster corresponding to the id of the submitted job.
+        self : object
+            Returns self.
 
         Examples
         --------
@@ -443,24 +443,9 @@ class Job(BaseNode):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         out, err = proc.communicate()
+        print(decode_string(out))
 
-        # check if the job submission reported any errors
-        if err:
-            msg = err.strip().replace('ERROR: ', '')
-            raise FailedSubmitError(msg)
-
-        # otherwise, try to parse the stdout to determine
-        # the id of the cluster of submitted jobs
-        match = re.search(r'(?<=submitted\sto\scluster )[0-9]+', out)
-        if match is None:
-            raise ValueError(
-                'Something went wrong, couldn\'t retrieve cluster id '
-                'from daemon response: "{}"'.format(out)
-            )
-        cluster_id = match.group(0)
-
-        # return an object for interacting with this cluster
-        return JobCluster(cluster_id)
+        return self
 
     @requires_command('condor_submit')
     def build_submit(self, makedirs=True, fancyname=True, submit_options=None):
@@ -486,8 +471,10 @@ class Job(BaseNode):
 
         Returns
         -------
-        cluster : JobCluster
-            Returns a JobCluster corresponding to the id of the submitted job.
+        self : object
+            Returns self.
         """
         self.build(makedirs, fancyname)
-        return self.submit_job(submit_options=submit_options)
+        self.submit_job(submit_options=submit_options)
+
+        return self
