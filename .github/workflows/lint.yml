@@ -11,11 +11,13 @@ on:
     branches:
       - main
       - master
+      - aframe
       - release/**
   pull_request:
     branches:
       - main
       - master
+      - aframe
       - release/**
 
 concurrency:
