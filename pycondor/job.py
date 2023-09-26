@@ -10,7 +10,7 @@ except ImportError:  # python < 3.3
 
 from .cluster import JobCluster
 from .utils import (checkdir, string_rep, requires_command,
-                    split_command_string)
+                    split_command_string, decode_string)
 from .basenode import BaseNode
 
 JobArg = namedtuple('JobArg', ['arg', 'name', 'retry'])
@@ -197,7 +197,7 @@ class Job(BaseNode):
         """Add argument to Job
 
         Parameters
-        ----------
+        ----------R
         arg : str
             Argument to append to Job args list.
 
@@ -440,21 +440,23 @@ class Job(BaseNode):
         if submit_options is not None:
             command += ' {}'.format(submit_options)
         command += ' {}'.format(self.submit_file)
-
+        self.logger.debug(command)
         proc = subprocess.Popen(
             split_command_string(command),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         out, err = proc.communicate()
+        self.logger.debug(out)
+        self.logger.debug(err)
 
         # check if the job submission reported any errors
         if err:
-            msg = err.strip().replace('ERROR: ', '')
+            msg = decode_string(err).strip().replace('ERROR: ', '')
             raise FailedSubmitError(msg)
 
         # otherwise, try to parse the stdout to determine
         # the id of the cluster of submitted jobs
-        match = re.search(r'(?<=submitted\sto\scluster )[0-9]+', out)
+        match = re.search(r'(?<=submitted\sto\scluster )[0-9]+', decode_string(out))
         if match is None:
             raise ValueError(
                 'Something went wrong, couldn\'t retrieve cluster id '
