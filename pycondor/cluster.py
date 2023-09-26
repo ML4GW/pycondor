@@ -51,7 +51,6 @@ class JobCluster:
         configs = query(id)
         procs = []
         for config in configs:
-            print(config)
             proc = Proc(
                 self,
                 int(config["procid"]),
