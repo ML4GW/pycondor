@@ -440,14 +440,12 @@ class Job(BaseNode):
         if submit_options is not None:
             command += ' {}'.format(submit_options)
         command += ' {}'.format(self.submit_file)
-        self.logger.debug(command)
+        
         proc = subprocess.Popen(
             split_command_string(command),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         out, err = proc.communicate()
-        self.logger.debug(out)
-        self.logger.debug(err)
 
         # check if the job submission reported any errors
         if err:
