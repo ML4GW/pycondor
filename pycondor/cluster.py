@@ -52,19 +52,18 @@ class JobCluster:
 
     def refresh(self):
         # requery procs for current running jobs.
-        # if new procs have been added, 
+        # if new procs have been added,
         # append them to proc list.
-        # this is to handle use cases where 
+        # this is to handle use cases where
         # all the jobs in the cluster may not have been
-        # submitted up front. For example, setting the 
+        # submitted up front. For example, setting the
         # `max_materialze` condor argument
-        
+
         current = self.query_procs()
         for proc in current:
             if proc.id not in self.proc_ids:
                 self.procs.append(proc)
-                
-    
+ 
     def query_procs(self):
         configs = query(self.id)
         procs = []
@@ -78,7 +77,6 @@ class JobCluster:
             )
             procs.append(proc)
         return procs
-
 
     def get_statuses(self) -> List[JobStatus]:
         """
