@@ -48,7 +48,24 @@ class JobCluster:
         # the ids and condor files for each of the associated
         # processes in order to avoid having to make a query
         # for each process in the cluster.
-        configs = query(id)
+        self.procs = self.query_procs()
+
+    def refresh(self):
+        # requery procs for current running jobs.
+        # if new procs have been added,
+        # append them to proc list.
+        # this is to handle use cases where
+        # all the jobs in the cluster may not have been
+        # submitted up front. For example, setting the
+        # `max_materialze` condor argument
+
+        current = self.query_procs()
+        for proc in current:
+            if proc.id not in self.proc_ids:
+                self.procs.append(proc)
+
+    def query_procs(self):
+        configs = query(self.id)
         procs = []
         for config in configs:
             proc = Proc(
@@ -59,8 +76,7 @@ class JobCluster:
                 err=config["err"],
             )
             procs.append(proc)
-
-        self.procs: list[Proc] = procs
+        return procs
 
     def get_statuses(self) -> List[JobStatus]:
         """
@@ -68,6 +84,7 @@ class JobCluster:
         for individual processes to get their statuses,
         returned as a list.
         """
+        self.refresh()
         configs = query(self.id)
         configs = {int(c.pop("procid")): c for c in configs}
         statuses = []
@@ -96,6 +113,10 @@ class JobCluster:
         statuses = self.get_statuses()
         reducer = any if how == "any" else all
         return reducer([i in status for i in statuses])
+
+    @property
+    def proc_ids(self):
+        return [proc.id for proc in self.procs]
 
     @property
     def id(self):
