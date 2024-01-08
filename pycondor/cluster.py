@@ -63,7 +63,7 @@ class JobCluster:
         for proc in current:
             if proc.id not in self.proc_ids:
                 self.procs.append(proc)
- 
+
     def query_procs(self):
         configs = query(self.id)
         procs = []
