@@ -35,9 +35,11 @@ class Job(BaseNode):
     Parameters
     ----------
     name : str
-        Name of the Job instance. This will also be the name of the
-        corresponding error, log, output, and submit files associated with
-        this Job.
+        Name of the Job instance. 
+
+    log_name: str, optional
+        The name of the error, log, output, and submit files associated with
+        this Job. If None, the name of the Job will be used.
 
     executable : str
         Path to corresponding executable for Job.
@@ -135,7 +137,7 @@ class Job(BaseNode):
 
     """
 
-    def __init__(self, name, executable, error=None, log=None, output=None,
+    def __init__(self, name, executable, log_name=None, error=None, log=None, output=None,
                  submit=None, request_memory=None, request_disk=None,
                  request_cpus=None, getenv=None, universe=None,
                  initialdir=None, notification=None, requirements=None,
@@ -148,6 +150,7 @@ class Job(BaseNode):
         self.error = error
         self.log = log
         self.output = output
+        self.log_name = log_name or name
         self.request_memory = request_memory
         self.request_disk = request_disk
         self.request_cpus = request_cpus
@@ -194,7 +197,7 @@ class Job(BaseNode):
         """Add argument to Job
 
         Parameters
-        ----------
+        ----------R
         arg : str
             Argument to append to Job args list.
 
@@ -304,7 +307,7 @@ class Job(BaseNode):
                                          '$(job_name).{}'.format(attr))
             else:
                 file_path = os.path.join(dir_path,
-                                         '{}.{}'.format(name, attr))
+                                         '{}.{}'.format(self.log_name, attr))
             lines.append('{} = {}'.format(attr, file_path))
             setattr(self, '{}_file'.format(attr), file_path)
             checkdir(file_path, makedirs)
@@ -437,7 +440,7 @@ class Job(BaseNode):
         if submit_options is not None:
             command += ' {}'.format(submit_options)
         command += ' {}'.format(self.submit_file)
-
+        
         proc = subprocess.Popen(
             split_command_string(command),
             stdout=subprocess.PIPE,
