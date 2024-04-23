@@ -53,7 +53,7 @@ class Job(BaseNode):
     output : str or None, optional
         Path to directory where condor Job output files will be written
         (default is None, will not be included in Job submit file).
-    
+
     suffix: str or None, optional
         Suffix to append to output, log, and error files in the submit file.
 
@@ -301,12 +301,12 @@ class Job(BaseNode):
                 dir_path = dir_env_var
             else:
                 continue
-                
+
             suffix = self.suffix if self.suffix is not None else ''
             job_name = name if not self._has_arg_names else '$(job_name)'
-            
+
             file_path = os.path.join(dir_path, "{}{}.{}".format(job_name, suffix, attr))
-        
+
             lines.append('{} = {}'.format(attr, file_path))
             setattr(self, '{}_file'.format(attr), file_path)
             checkdir(file_path, makedirs)

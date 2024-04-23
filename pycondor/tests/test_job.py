@@ -330,17 +330,17 @@ def test_init_retry_type_fail():
 
 def test_job_suffix(tmpdir):
     job = Job(
-        'jobname', 
-        example_script, 
+        'jobname',
+        example_script,
         suffix='-suffix',
-        log = str(tmpdir.join('log')),
-        error = str(tmpdir.join('error')),
-        output = str(tmpdir.join('output')), 
+        log=str(tmpdir.join('log')),
+        error=str(tmpdir.join('error')),
+        output=str(tmpdir.join('output')), 
     )
     job.build()
     with open(job.submit_file, 'r') as f:
         lines = f.readlines()
-    
+
     for attr in ['log', 'error', 'output']:
         for line in lines:
             if line.startswith(attr):
