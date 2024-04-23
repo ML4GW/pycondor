@@ -53,6 +53,9 @@ class Job(BaseNode):
     output : str or None, optional
         Path to directory where condor Job output files will be written
         (default is None, will not be included in Job submit file).
+    
+    suffix: str or None, optional
+        Suffix to append to output, log, and error files in the submit file.
 
     submit : str, optional
         Path to directory where condor Job submit files will be written
@@ -136,7 +139,7 @@ class Job(BaseNode):
     """
 
     def __init__(self, name, executable, error=None, log=None, output=None,
-                 submit=None, request_memory=None, request_disk=None,
+                 suffix=None, submit=None, request_memory=None, request_disk=None,
                  request_cpus=None, getenv=None, universe=None,
                  initialdir=None, notification=None, requirements=None,
                  queue=None, extra_lines=None, dag=None, arguments=None,
@@ -148,6 +151,7 @@ class Job(BaseNode):
         self.error = error
         self.log = log
         self.output = output
+        self.suffix = suffix
         self.request_memory = request_memory
         self.request_disk = request_disk
         self.request_cpus = request_cpus
@@ -297,14 +301,12 @@ class Job(BaseNode):
                 dir_path = dir_env_var
             else:
                 continue
-
-            # Add log/output/error files to submit file lines
-            if self._has_arg_names:
-                file_path = os.path.join(dir_path,
-                                         '$(job_name).{}'.format(attr))
-            else:
-                file_path = os.path.join(dir_path,
-                                         '{}.{}'.format(name, attr))
+                
+            suffix = self.suffix if self.suffix is not None else ''
+            job_name = name if not self._has_arg_names else '$(job_name)'
+            
+            file_path = os.path.join(dir_path, "{}{}.{}".format(job_name, suffix, attr))
+        
             lines.append('{} = {}'.format(attr, file_path))
             setattr(self, '{}_file'.format(attr), file_path)
             checkdir(file_path, makedirs)
