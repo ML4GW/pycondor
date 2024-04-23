@@ -335,7 +335,7 @@ def test_job_suffix(tmpdir):
         suffix='-suffix',
         log=str(tmpdir.join('log')),
         error=str(tmpdir.join('error')),
-        output=str(tmpdir.join('output')), 
+        output=str(tmpdir.join('output')),
     )
     job.build()
     with open(job.submit_file, 'r') as f:
